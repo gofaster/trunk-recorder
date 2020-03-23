@@ -612,7 +612,7 @@ bool start_recorder(Call *call, TrunkMessage message, System *sys) {
 
   if (!talkgroup && (sys->get_record_unknown() == false)) {
     if (sys->get_hideUnknown() == false) {
-      BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]-[" << call->get_sys_num() << "]\tTG: " << call->get_talkgroup_display() << "\tFreq: " << FormatFreq(call->get_freq()) << "\t\u001b[33mNot Recording: TG not in Talkgroup File\u001b[0m ";
+      BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]-[" << call->get_sys_num() << "]\tTG: " << call->get_talkgroup() << "\tFreq: " << FormatFreq(call->get_freq()) << "\t\u001b[33mNot Recording: TG not in Talkgroup File\u001b[0m ";
     }
     return false;
   }
@@ -638,7 +638,7 @@ bool start_recorder(Call *call, TrunkMessage message, System *sys) {
           recorder = source->get_digital_recorder(talkgroup->get_priority());
         }
       } else {
-        BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]-[" << call->get_sys_num() << "]\tTG: " << call->get_talkgroup_display() << "\tFreq: " << FormatFreq(call->get_freq()) << "\tTG not in Talkgroup File ";
+        BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]-[" << call->get_sys_num() << "]\tTG: " << call->get_talkgroup() << "\tFreq: " << FormatFreq(call->get_freq()) << "\tTG not in Talkgroup File ";
 
         // A talkgroup was not found from the talkgroup file.
           if (default_mode == "analog") {
