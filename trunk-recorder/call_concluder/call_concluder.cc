@@ -303,10 +303,8 @@ Call_Data_t Call_Concluder::create_base_filename(Call *call, Call_Data_t call_in
   return call_info;
 }
 
-
-Call_Data_t Call_Concluder::create_call_data(Call *call, System *sys, Config config) {
+Call_Data_t Call_Concluder::initialize_call_data(Call *call, System *sys, Config config) {
   Call_Data_t call_info;
-  double total_length = 0;
 
   call_info = create_base_filename(call, call_info);
 
@@ -363,10 +361,23 @@ Call_Data_t Call_Concluder::create_call_data(Call *call, System *sys, Config con
     call_info.audio_type = "digital";
   }
 
+  return call_info;
+
+}
+
+std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sys, Config config) {
+  Call_Data_t call_info;
+  double total_length = 0;
+  bool conversation_mode = sys->get_conversation_mode();
+  std::vector<Call_Data_t> call_data_list = {};
+  std::vector<Transmission> transmission_list = call->get_transmissions();
+
+  call_info = initialize_call_data(call, sys, config);
+
 
   // loop through the transmission list, pull in things to fill in totals for call_info
   // Using a for loop with iterator
-  for (std::vector<Transmission>::iterator it = call_info.transmission_list.begin(); it != call_info.transmission_list.end();) {
+  for (std::vector<Transmission>::iterator it = transmission_list.begin(); it != transmission_list.end();) {
     Transmission t = *it;
 
     if (t.length < sys->get_min_tx_duration()) {
@@ -380,7 +391,7 @@ Call_Data_t Call_Concluder::create_call_data(Call *call, System *sys, Config con
         }
       }
 
-      it = call_info.transmission_list.erase(it);
+      it = transmission_list.erase(it);
       continue;
     }
 
@@ -400,13 +411,7 @@ Call_Data_t Call_Concluder::create_call_data(Call *call, System *sys, Config con
       BOOST_LOG_TRIVIAL(info) << transmission_info.str() << "\033[0;31m errors: " << t.error_count << " spikes: " << t.spike_count << "\033[0m";
     }
 
-    if (it == call_info.transmission_list.begin()) {
-      call_info.start_time = t.start_time;
-    }
 
-    if (std::next(it) == call_info.transmission_list.end()) {
-      call_info.stop_time = t.stop_time;
-    }
 
     Call_Source call_source = {t.source, t.start_time, total_length, false, "", tag};
     Call_Error call_error = {t.start_time, total_length, t.length, t.error_count, t.spike_count};
@@ -415,18 +420,46 @@ Call_Data_t Call_Concluder::create_call_data(Call *call, System *sys, Config con
     call_info.transmission_source_list.push_back(call_source);
     call_info.transmission_error_list.push_back(call_error);
 
-    total_length = total_length + t.length;
+
+    if (conversation_mode) {
+      // set all of these values to the current transmission
+      call_info.start_time = t.start_time;
+      call_info.stop_time = t.stop_time;
+      call_info.length = t.length;
+      call_info.transmission_list = std::vector<Transmission>{t};
+
+      // If conversation mode is enabled, we need to create a new call_info for each transmission
+      call_data_list.push_back(call_info);
+      call_info = initialize_call_data(call, sys, config);
+    } else {
+      // If conversation mode is disabled, we need to check if we are at the first or last transmission and set the start and stop times
+    if (it == call_info.transmission_list.begin()) {
+      call_info.start_time = t.start_time;
+    }
+
+    if (std::next(it) == call_info.transmission_list.end()) {
+      call_info.stop_time = t.stop_time;
+    }
+    }
+        total_length = total_length + t.length;
     it++;
+
+
   }
 
-  call_info.length = total_length;
 
-  return call_info;
+  if (!conversation_mode) {
+    call_info.length = total_length;
+    call_info.transmission_list = transmission_list;
+    call_data_list.push_back(call_info);
+  }
+  return call_data_list;
 }
 
 void Call_Concluder::conclude_call(Call *call, System *sys, Config config) {
-  Call_Data_t call_info = create_call_data(call, sys, config);
+  std::vector<Call_Data_t> call_data_list = create_call_data(call, sys, config);
 
+  for (Call_Data_t call_info : call_data_list) {
   std::string loghdr = log_header( call_info.short_name, call_info.call_num, call_info.talkgroup_display , call_info.freq);
   if(call->get_state() == MONITORING && call->get_monitoring_state() == SUPERSEDED){
     BOOST_LOG_TRIVIAL(info) << loghdr << "Call has been superseded. Removing files.";
@@ -450,6 +483,7 @@ void Call_Concluder::conclude_call(Call *call, System *sys, Config config) {
 
 
   call_data_workers.push_back(std::async(std::launch::async, upload_call_worker, call_info));
+  }
 }
 
 void Call_Concluder::manage_call_data_workers() {

@@ -23,8 +23,8 @@ public:
   static const int MAX_RETRY;
   static std::list<Call_Data_t> retry_call_list;
   static std::list<std::future<Call_Data_t>> call_data_workers;
-  
-  static Call_Data_t create_call_data(Call *call, System *sys, Config config);
+  static Call_Data_t initialize_call_data(Call *call, System *sys, Config config);
+  static std::vector<Call_Data_t> create_call_data(Call *call, System *sys, Config config);
   static void conclude_call(Call *call, System *sys, Config config);
   static void manage_call_data_workers();
 
