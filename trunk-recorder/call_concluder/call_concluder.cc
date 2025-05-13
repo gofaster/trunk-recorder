@@ -421,7 +421,7 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
     call_info.transmission_error_list.push_back(call_error);
 
 
-    if (conversation_mode) {
+    if (!conversation_mode) {
       // set all of these values to the current transmission
       call_info.start_time = t.start_time;
       call_info.stop_time = t.stop_time;
@@ -448,7 +448,7 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
   }
 
 
-  if (!conversation_mode) {
+  if (conversation_mode) {
     call_info.length = total_length;
     call_info.transmission_list = transmission_list;
     call_data_list.push_back(call_info);
