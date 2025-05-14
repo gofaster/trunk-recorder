@@ -7,6 +7,12 @@
 #include "global_structs.h"
 //#include <sstream>
 
+enum ConversationMode {
+  CONVERSATION_MODE_DISABLED,
+  CONVERSATION_MODE_ENABLED,
+  CONVERSATION_MODE_UNSET
+};
+
 class Talkgroup {
 public:
   long number;
@@ -19,17 +25,19 @@ public:
   int sys_num;
   double squelch_db;
   bool signal_detection;
+  ConversationMode conversation_mode;
 
 
   // For Conventional
   double freq;
   double tone;
 
-  Talkgroup(int sys_num, long num, std::string mode, std::string alpha_tag, std::string description, std::string tag, std::string group, int priority, unsigned long preferredNAC);
+  Talkgroup(int sys_num, long num, std::string mode, std::string alpha_tag, std::string description, std::string tag, std::string group, int priority, unsigned long preferredNAC, ConversationMode conversation_mode);
   Talkgroup(int sys_num, long num, double freq, double tone, std::string alpha_tag, std::string description, std::string tag, std::string group, double squelch_db, bool signal_detection);
 
   bool is_active();
   int get_priority();
+  ConversationMode get_conversation_mode();
   unsigned long get_preferredNAC();
   void set_priority(int new_priority);
   void set_active(bool a);

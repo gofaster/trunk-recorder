@@ -29,14 +29,14 @@ void Talkgroups::load_talkgroups(int sys_num, std::string filename) {
   format.trim({' ', '\t'});
   CSVReader reader(filename, format);
   std::vector<std::string> headers = reader.get_col_names();
-  std::vector<std::string> defined_headers = {"Decimal", "Mode", "Description", "Alpha Tag", "Hex", "Category", "Tag", "Priority", "Preferred NAC", "Comment"};
+  std::vector<std::string> defined_headers = {"Decimal", "Mode", "Description", "Alpha Tag", "Hex", "Category", "Tag", "Priority", "Preferred NAC", "Comment", "Conversation Mode"};
 
   if (headers[0] != "Decimal") {
 
     BOOST_LOG_TRIVIAL(error) << "Column Headers are required for Talkgroup CSV files";
     BOOST_LOG_TRIVIAL(error) << "The first column must be 'Decimal'";
     BOOST_LOG_TRIVIAL(error) << "Required columns are: 'Decimal', 'Mode', 'Description'";
-    BOOST_LOG_TRIVIAL(error) << "Optional columns are: 'Alpha Tag', 'Hex', 'Category', 'Tag', 'Priority', 'Preferred NAC'";
+    BOOST_LOG_TRIVIAL(error) << "Optional columns are: 'Alpha Tag', 'Hex', 'Category', 'Tag', 'Priority', 'Preferred NAC','Comment','Conversation Mode'";
     exit(0);
   } else {
     BOOST_LOG_TRIVIAL(info) << "Found Columns: " << internals::format_row(reader.get_col_names(), ", ");
@@ -46,7 +46,7 @@ void Talkgroups::load_talkgroups(int sys_num, std::string filename) {
     if (find(defined_headers.begin(), defined_headers.end(), headers[i]) == defined_headers.end()) {
       BOOST_LOG_TRIVIAL(error) << "Unknown column header: " << headers[i];
       BOOST_LOG_TRIVIAL(error) << "Required columns are: 'Decimal', 'Mode', 'Description'";
-      BOOST_LOG_TRIVIAL(error) << "Optional columns are: 'Alpha Tag', 'Hex', 'Category', 'Tag', 'Priority', 'Preferred NAC'";
+      BOOST_LOG_TRIVIAL(error) << "Optional columns are: 'Alpha Tag', 'Hex', 'Category', 'Tag', 'Priority', 'Preferred NAC','Comment','Conversation Mode'";
       exit(0);
     }
   }
@@ -62,6 +62,7 @@ void Talkgroups::load_talkgroups(int sys_num, std::string filename) {
     std::string tag = "";
     std::string group = "";
     std::string mode = "";
+    ConversationMode conversation_mode = CONVERSATION_MODE_UNSET;
 
     if ((reader.index_of("Decimal") >= 0) && !row["Decimal"].is_null() && row["Decimal"].is_int()) {
       tg_number = row["Decimal"].get<long>();
@@ -105,7 +106,16 @@ void Talkgroups::load_talkgroups(int sys_num, std::string filename) {
     if ((reader.index_of("Preferred NAC") >= 0) && row["Preferred NAC"].is_int()) {
       preferredNAC = row["Preferred NAC"].get<unsigned long>();
     }
-    tg = new Talkgroup(sys_num, tg_number, mode, alpha_tag, description, tag, group, priority, preferredNAC);
+
+    if ((reader.index_of("Conversation Mode") >= 0) && row["Conversation Mode"].is_str()) {
+      if (boost::iequals(row["Conversation Mode"].get<std::string>(), "false")) {
+        conversation_mode = CONVERSATION_MODE_DISABLED;
+      } else if (boost::iequals(row["Conversation Mode"].get<std::string>(), "true")) {
+        conversation_mode = CONVERSATION_MODE_ENABLED;
+      }
+    }
+
+    tg = new Talkgroup(sys_num, tg_number, mode, alpha_tag, description, tag, group, priority, preferredNAC, conversation_mode);
     talkgroups.push_back(tg);
     lines_pushed++;
   }

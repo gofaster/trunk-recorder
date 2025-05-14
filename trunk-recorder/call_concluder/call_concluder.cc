@@ -374,6 +374,16 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
 
   call_info = initialize_call_data(call, sys, config);
 
+  // Check if the talkgroup has a conversation mode, if so, use that instead of the system default
+  Talkgroup *tg = sys->find_talkgroup(call->get_talkgroup());
+  if (tg != NULL) {
+    ConversationMode tg_conversation_mode = tg->get_conversation_mode();
+    if (tg_conversation_mode == CONVERSATION_MODE_DISABLED) {
+      conversation_mode = false;
+    } else if (tg_conversation_mode == CONVERSATION_MODE_ENABLED) {
+      conversation_mode = true;
+    }
+  }
 
   // loop through the transmission list, pull in things to fill in totals for call_info
   // Using a for loop with iterator

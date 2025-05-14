@@ -1,6 +1,6 @@
 #include "talkgroup.h"
 
-Talkgroup::Talkgroup(int sys_num, long num, std::string mode, std::string alpha_tag, std::string description, std::string tag, std::string group, int priority, unsigned long preferredNAC) {
+Talkgroup::Talkgroup(int sys_num, long num, std::string mode, std::string alpha_tag, std::string description, std::string tag, std::string group, int priority, unsigned long preferredNAC, ConversationMode conversation_mode) {
   this->sys_num = sys_num;
   this->number = num;
   this->mode = mode;
@@ -11,6 +11,7 @@ Talkgroup::Talkgroup(int sys_num, long num, std::string mode, std::string alpha_
   this->priority = priority;
   this->active = false;
   this->preferredNAC = preferredNAC;
+  this->conversation_mode = conversation_mode;
 
   // This talkgroup is for a Trunked system and freq and tone are not used
   this->freq = 0;
@@ -55,6 +56,10 @@ std::string Talkgroup::menu_string() {
 
 int Talkgroup::get_priority() {
   return priority;
+}
+
+ConversationMode Talkgroup::get_conversation_mode() {
+  return conversation_mode;
 }
 
 unsigned long Talkgroup::get_preferredNAC() {

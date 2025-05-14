@@ -189,6 +189,10 @@ bool load_config(string config_file, Config &config, gr::top_block_sptr &tb, std
     config.default_mode = data.value("defaultMode", "digital");
     BOOST_LOG_TRIVIAL(info) << "Default Mode: " << config.default_mode;
     config.call_timeout = data.value("callTimeout", 3.0);
+    if (config.call_timeout <= 0.0) {
+      BOOST_LOG_TRIVIAL(error) << "The 'callTimeout' config value must be greater than 0";
+      return false;
+    }
     BOOST_LOG_TRIVIAL(info) << "Call Timeout (seconds): " << config.call_timeout;
     config.control_message_warn_rate = data.value("controlWarnRate", 10);
     BOOST_LOG_TRIVIAL(info) << "Control channel warning rate: " << config.control_message_warn_rate;
