@@ -443,11 +443,11 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
       call_info = initialize_call_data(call, sys, config);
     } else {
       // If conversation mode is disabled, we need to check if we are at the first or last transmission and set the start and stop times
-    if (it == call_info.transmission_list.begin()) {
+    if (it == transmission_list.begin()) {
       call_info.start_time = t.start_time;
     }
 
-    if (std::next(it) == call_info.transmission_list.end()) {
+    if (std::next(it) == transmission_list.end()) {
       call_info.stop_time = t.stop_time;
     }
     }
