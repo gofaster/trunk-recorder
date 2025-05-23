@@ -277,7 +277,7 @@ Call_Data_t upload_call_worker(Call_Data_t call_info) {
 // static int rec_counter=0;
 Call_Data_t Call_Concluder::create_base_filename(Call *call, Call_Data_t call_info) {
   char base_filename[255];
-  time_t work_start_time = call->get_start_time();
+  time_t work_start_time = call_info.start_time;
   std::stringstream base_path_stream;
   tm *ltm = localtime(&work_start_time);
   // Found some good advice on Streams and Strings here: https://blog.sensecodons.com/2013/04/dont-let-stdstringstreamstrcstr-happen.html
@@ -306,7 +306,7 @@ Call_Data_t Call_Concluder::create_base_filename(Call *call, Call_Data_t call_in
 Call_Data_t Call_Concluder::initialize_call_data(Call *call, System *sys, Config config) {
   Call_Data_t call_info;
 
-  call_info = create_base_filename(call, call_info);
+
 
   call_info.status = INITIAL;
   call_info.process_call_time = time(0);
@@ -413,7 +413,7 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
 
     std::stringstream transmission_info;
     std::string loghdr = log_header( call_info.short_name, call_info.call_num, call_info.talkgroup_display , call_info.freq);
-    transmission_info << loghdr << "- Transmission src: " << t.source << display_tag << " pos: " << format_time(total_length) << " length: " << format_time(t.length);
+    transmission_info << loghdr << "- Transmission src: " << t.source << display_tag << " pos: " << format_time(total_length) << " length: " << format_time(t.length) << " file: " << t.filename;
 
     if (t.error_count < 1) {
       BOOST_LOG_TRIVIAL(info) << transmission_info.str();
@@ -437,8 +437,10 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
       call_info.stop_time = t.stop_time;
       call_info.length = t.length;
       call_info.transmission_list = std::vector<Transmission>{t};
+      // we neeed to generate the filenames down here because the start time needs to be set
+      call_info = create_base_filename(call, call_info);
 
-      // If conversation mode is enabled, we need to create a new call_info for each transmission
+      // If conversation mode is not enabled, we need to create a new call_info for each transmission
       call_data_list.push_back(call_info);
       call_info = initialize_call_data(call, sys, config);
     } else {
@@ -461,6 +463,8 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
   if (conversation_mode) {
     call_info.length = total_length;
     call_info.transmission_list = transmission_list;
+    // we neeed to generate the filenames down here because the start time needs to be determined based on transmission times
+    call_info = create_base_filename(call, call_info);
     call_data_list.push_back(call_info);
   }
   return call_data_list;
