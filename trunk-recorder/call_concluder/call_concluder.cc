@@ -385,6 +385,12 @@ std::vector<Call_Data_t> Call_Concluder::create_call_data(Call *call, System *sy
     }
   }
 
+  if (conversation_mode) {
+    BOOST_LOG_TRIVIAL(info) << "Conversation mode enabled for " << call->get_talkgroup_display() << " - " << call->get_short_name();
+  } else {
+    BOOST_LOG_TRIVIAL(info) << "Conversation mode disabled for " << call->get_talkgroup_display() << " - " << call->get_short_name();
+  }
+  
   // loop through the transmission list, pull in things to fill in totals for call_info
   // Using a for loop with iterator
   for (std::vector<Transmission>::iterator it = transmission_list.begin(); it != transmission_list.end();) {
