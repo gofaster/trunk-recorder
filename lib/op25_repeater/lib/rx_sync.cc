@@ -233,7 +233,7 @@ rx_sync::rx_sync(const char * options, log_ts& logger, int debug, int msgq_id, g
 	output_queue(output_queue),
 	p25fdma(d_audio, logger, debug, true, false, true, queue, d_output_queue[0], true, msgq_id),
 	p25tdma(d_audio, logger, 0, debug, true, queue, d_output_queue[0], true, msgq_id),
-	dmr(logger, debug, msgq_id, queue),
+	dmr(logger, 10, msgq_id, queue),
 	d_msgq_id(msgq_id),
 	d_msg_queue(queue),
 	d_stereo(true),
