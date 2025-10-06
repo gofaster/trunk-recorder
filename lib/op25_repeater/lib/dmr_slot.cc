@@ -90,6 +90,7 @@ bool
 dmr_slot::load_slot(const uint8_t slot[], uint64_t sl_type) {
 	bool is_voice_frame = false;
 	d_src_id = -1;
+	d_dst_id = -1;
 	d_terminated = std::pair<bool,long>(false, 0);
 	memcpy(d_slot, slot, sizeof(d_slot));
 
@@ -152,6 +153,7 @@ dmr_slot::decode_slot_type() {
 	if ((d_cc != slot_cc) && (d_cc == 0x0))
 		d_cc = slot_cc;
 	else if (d_cc != slot_cc)
+		fprintf(stderr, "ERROR: Slot CC mismatch: d_cc=%x, slot_cc=%x\n", d_cc, slot_cc);
 		return false;
 
 	if (d_debug >= 10) {
@@ -435,6 +437,8 @@ dmr_slot::decode_pdp_header(uint8_t* dhdr) {
 		else
 			d_dhdr_state = DATA_VALID;
 
+		d_dst_id = get_dhdr_dst();
+		d_src_id = get_dhdr_src();
 		if (d_debug >= 10) {
 			fprintf(stderr, "%s Slot(%d), CC(%x), PDP HDR1 GF(%01x), DPF(%01x), SAP(%01x), POC(%01x), BF(%02x), DEST(%u), SOURCE(%u) : %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", logts.get(d_msgq_id), d_chan, get_slot_cc(), pdp_gf, pdp_dpf, pdp_sap, pdp_poc, pdp_bf, get_dhdr_dst(), get_dhdr_src(),
 				d_dhdr[0], d_dhdr[1], d_dhdr[2], d_dhdr[3], d_dhdr[4], d_dhdr[5], d_dhdr[6], d_dhdr[7], d_dhdr[8], d_dhdr[9]);
@@ -497,6 +501,8 @@ dmr_slot::decode_pdp_12data(uint8_t* pdp) {
 
 	if (d_pdp_bf == 0) {
 		d_pdp_state = DATA_VALID;
+		d_dst_id = get_dhdr_dst();
+		d_src_id = get_dhdr_src();
 
 		if (d_debug >= 10) {
 			int d_len = d_pdp.size() - (d_pdp_poc + 4);
@@ -539,6 +545,9 @@ dmr_slot::decode_pdp_34data(uint8_t* pdp) {
 	if (d_pdp_bf == 0) {
 		d_pdp_state = DATA_VALID;
 
+		d_dst_id = get_dhdr_dst();
+		d_src_id = get_dhdr_src();
+		
 		if (d_debug >= 10) {
 			int d_len = d_pdp.size() - (d_pdp_poc + 4);
 			char szData[(d_len * 3) + 1];
@@ -574,7 +583,7 @@ dmr_slot::decode_vlch(uint8_t* vlch) {
 	send_msg(lc_msg, M_DMR_SLOT_VLC);
 
 	d_src_id = get_lc_srcaddr();
-
+	d_dst_id = get_lc_dstaddr();
 	if (d_debug >= 0) {
 		fprintf(stderr, "%s Slot(%d), CC(%x), VOICE LC PF(%d), FLCO(%02x), FID(%02x), SVCOPT(%02X), DSTADDR(%06x), SRCADDR(%06x), rs_errs=%d\n",  logts.get(d_msgq_id),	d_chan, get_slot_cc(), get_lc_pf(), get_lc_flco(), get_lc_fid(), get_lc_svcopt(), get_lc_dstaddr(), get_lc_srcaddr(), rs_errs);
 	}
@@ -605,6 +614,9 @@ dmr_slot::decode_tlc(uint8_t* tlc) {
 		lc_msg[i] = d_lc[i];
 	}
 	send_msg(lc_msg, M_DMR_SLOT_TLC);
+
+	d_src_id = get_lc_srcaddr();
+	d_dst_id = get_lc_dstaddr();
 
 	if (d_debug >= 10) {
 		fprintf(stderr, "%s Slot(%d), CC(%x), TERM LC PF(%d), FLCO(%02x), FID(%02x), SVCOPT(%02X), DSTADDR(%06x), SRCADDR(%06x), rs_errs=%d\n", logts.get(d_msgq_id), d_chan, get_slot_cc(), get_lc_pf(), get_lc_flco(), get_lc_fid(), get_lc_svcopt(), get_lc_dstaddr(), get_lc_srcaddr(), rs_errs);
@@ -728,6 +740,8 @@ dmr_slot::decode_emb() {
 				d_emb.push_back(d_slot[SYNC_EMB + 8 + i]);
 			if (decode_embedded_lc()) {
 				d_terminated = std::pair<bool, int>(true, 0);
+				d_src_id = get_lc_srcaddr();
+				d_dst_id = get_lc_dstaddr();
 				if (d_debug >= 0) {
 					fprintf(stderr, "%s END !! Slot(%d), CC(%x), EMB LC PF(%d), FLCO(%02x), FID(%02x), SVCOPT(%02X), DSTADDR(%06x), SRCADDR(%06x)\n",  logts.get(d_msgq_id), d_chan, emb_cc, get_lc_pf(), get_lc_flco(), get_lc_fid(), get_lc_svcopt(), get_lc_dstaddr(), get_lc_srcaddr());
 				}
@@ -749,6 +763,14 @@ std::pair<bool,long> dmr_slot::get_terminated() {
 
 int dmr_slot::get_src_id() {
 	return d_src_id;
+}
+
+int dmr_slot::get_dst_id() {
+	return d_dst_id;
+}
+
+int dmr_slot::get_cc() {
+	return d_cc;
 }
 
 bool
