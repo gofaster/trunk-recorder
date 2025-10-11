@@ -58,7 +58,7 @@ dmr_slot::dmr_slot(const int chan, log_ts& logger, const int debug, int msgq_id,
 	d_type(0),
 	d_cc(0),
 	d_msgq_id(msgq_id),
-	d_debug(debug),
+	d_debug(0),
 	d_chan(chan),
 	d_slot_mask(3),
 	logts(logger),
@@ -439,7 +439,7 @@ dmr_slot::decode_pdp_header(uint8_t* dhdr) {
 
 		d_dst_id = get_dhdr_dst();
 		d_src_id = get_dhdr_src();
-		if (d_debug >= 10) {
+		if (d_debug >= 0) {
 			fprintf(stderr, "%s Slot(%d), CC(%x), PDP HDR1 GF(%01x), DPF(%01x), SAP(%01x), POC(%01x), BF(%02x), DEST(%u), SOURCE(%u) : %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", logts.get(d_msgq_id), d_chan, get_slot_cc(), pdp_gf, pdp_dpf, pdp_sap, pdp_poc, pdp_bf, get_dhdr_dst(), get_dhdr_src(),
 				d_dhdr[0], d_dhdr[1], d_dhdr[2], d_dhdr[3], d_dhdr[4], d_dhdr[5], d_dhdr[6], d_dhdr[7], d_dhdr[8], d_dhdr[9]);
 		}
@@ -504,7 +504,7 @@ dmr_slot::decode_pdp_12data(uint8_t* pdp) {
 		d_dst_id = get_dhdr_dst();
 		d_src_id = get_dhdr_src();
 
-		if (d_debug >= 10) {
+		if (d_debug >= 0) {
 			int d_len = d_pdp.size() - (d_pdp_poc + 4);
 			char szData[(d_len * 3) + 1];
 			for (int i = 0; i < d_len; i++)
@@ -548,7 +548,7 @@ dmr_slot::decode_pdp_34data(uint8_t* pdp) {
 		d_dst_id = get_dhdr_dst();
 		d_src_id = get_dhdr_src();
 		
-		if (d_debug >= 10) {
+		if (d_debug >= 0) {
 			int d_len = d_pdp.size() - (d_pdp_poc + 4);
 			char szData[(d_len * 3) + 1];
 			for (int i = 0; i < d_len; i++)
@@ -618,7 +618,7 @@ dmr_slot::decode_tlc(uint8_t* tlc) {
 	d_src_id = get_lc_srcaddr();
 	d_dst_id = get_lc_dstaddr();
 
-	if (d_debug >= 10) {
+	if (d_debug >= 0) {
 		fprintf(stderr, "%s Slot(%d), CC(%x), TERM LC PF(%d), FLCO(%02x), FID(%02x), SVCOPT(%02X), DSTADDR(%06x), SRCADDR(%06x), rs_errs=%d\n", logts.get(d_msgq_id), d_chan, get_slot_cc(), get_lc_pf(), get_lc_flco(), get_lc_fid(), get_lc_svcopt(), get_lc_dstaddr(), get_lc_srcaddr(), rs_errs);
 	}
 
@@ -784,14 +784,6 @@ dmr_slot::decode_embedded_lc() {
 	memset(data, 0, 128 * sizeof(bool));
 	unsigned int b = 0;
 	for (unsigned int a = 0; a < 128; a++) {
-		if (a >= sizeof(d_emb)) {
-			std::cerr << "EMB LC data incomplete, size: " << sizeof(d_emb) << std::endl;
-			break;
-		}
-		if (b >= 128) {
-			std::cerr << "EMB LC data overflow, b: " << b << std::endl;
-			break;
-		}
 		data[b] = d_emb[a];
 		b += 16;
 		if (b > 127)
@@ -801,6 +793,7 @@ dmr_slot::decode_embedded_lc() {
 	// Hamming (16,11,4) check each row except the last one
 	for (unsigned int a = 0; a < 112; a += 16) {
 		if (!CHamming::decode16114(data + a))
+			std::cerr << "EMB LC Hamming error" << std::endl;
 			return false;
 	}
 
@@ -808,6 +801,7 @@ dmr_slot::decode_embedded_lc() {
 	for (unsigned int a = 0; a < 16; a++) {
 		bool parity = data[a + 0] ^ data[a + 16] ^ data[a + 32] ^ data[a + 48] ^ data[a + 64] ^ data[a + 80] ^ data[a + 96] ^ data[a + 112];
 		if (parity)
+			std::cerr << "EMB LC parity error" << std::endl;
 			return false;
 	}
 
@@ -847,15 +841,11 @@ dmr_slot::decode_embedded_lc() {
 		// send up the stack
 		std::string lc_msg(9,0);
 		for (int i = 0; i < 9; i++) {
-			if (d_lc.size() <= i) {
-				std::cerr << "EMB LC data incomplete, size: " << d_lc.size() << std::endl;
-				break;
-			}
 			lc_msg[i] = d_lc[i];
 		}
 		send_msg(lc_msg, M_DMR_SLOT_ELC);
 
-		if (d_debug >=10) {
+		if (d_debug >=0) {
 			fprintf(stderr, "%s EMB LC: %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
 				logts.get(d_msgq_id),
 				d_lc[0], d_lc[1], d_lc[2], d_lc[3], d_lc[4], d_lc[5], d_lc[6], d_lc[7], d_lc[8]);
