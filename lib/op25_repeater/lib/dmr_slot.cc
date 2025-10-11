@@ -58,7 +58,7 @@ dmr_slot::dmr_slot(const int chan, log_ts& logger, const int debug, int msgq_id,
 	d_type(0),
 	d_cc(0),
 	d_msgq_id(msgq_id),
-	d_debug(0),
+	d_debug(debug),
 	d_chan(chan),
 	d_slot_mask(3),
 	logts(logger),
@@ -153,7 +153,6 @@ dmr_slot::decode_slot_type() {
 	if ((d_cc != slot_cc) && (d_cc == 0x0))
 		d_cc = slot_cc;
 	else if (d_cc != slot_cc)
-		fprintf(stderr, "ERROR: Slot CC mismatch: d_cc=%x, slot_cc=%x\n", d_cc, slot_cc);
 		return false;
 
 	if (d_debug >= 10) {
@@ -437,9 +436,7 @@ dmr_slot::decode_pdp_header(uint8_t* dhdr) {
 		else
 			d_dhdr_state = DATA_VALID;
 
-		d_dst_id = get_dhdr_dst();
-		d_src_id = get_dhdr_src();
-		if (d_debug >= 0) {
+		if (d_debug >= 10) {
 			fprintf(stderr, "%s Slot(%d), CC(%x), PDP HDR1 GF(%01x), DPF(%01x), SAP(%01x), POC(%01x), BF(%02x), DEST(%u), SOURCE(%u) : %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", logts.get(d_msgq_id), d_chan, get_slot_cc(), pdp_gf, pdp_dpf, pdp_sap, pdp_poc, pdp_bf, get_dhdr_dst(), get_dhdr_src(),
 				d_dhdr[0], d_dhdr[1], d_dhdr[2], d_dhdr[3], d_dhdr[4], d_dhdr[5], d_dhdr[6], d_dhdr[7], d_dhdr[8], d_dhdr[9]);
 		}
@@ -740,8 +737,6 @@ dmr_slot::decode_emb() {
 				d_emb.push_back(d_slot[SYNC_EMB + 8 + i]);
 			if (decode_embedded_lc()) {
 				d_terminated = std::pair<bool, int>(true, 0);
-				d_src_id = get_lc_srcaddr();
-				d_dst_id = get_lc_dstaddr();
 				if (d_debug >= 0) {
 					fprintf(stderr, "%s END !! Slot(%d), CC(%x), EMB LC PF(%d), FLCO(%02x), FID(%02x), SVCOPT(%02X), DSTADDR(%06x), SRCADDR(%06x)\n",  logts.get(d_msgq_id), d_chan, emb_cc, get_lc_pf(), get_lc_flco(), get_lc_fid(), get_lc_svcopt(), get_lc_dstaddr(), get_lc_srcaddr());
 				}
@@ -845,7 +840,7 @@ dmr_slot::decode_embedded_lc() {
 		}
 		send_msg(lc_msg, M_DMR_SLOT_ELC);
 
-		if (d_debug >=0) {
+		if (d_debug >=10) {
 			fprintf(stderr, "%s EMB LC: %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
 				logts.get(d_msgq_id),
 				d_lc[0], d_lc[1], d_lc[2], d_lc[3], d_lc[4], d_lc[5], d_lc[6], d_lc[7], d_lc[8]);
