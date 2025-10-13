@@ -93,6 +93,7 @@ enum Recorder_Type { DEBUG,
 
 struct Call_Data_t {
   long talkgroup;
+  long color_code;
   std::vector<unsigned long> patched_talkgroups;
   std::string talkgroup_tag;
   std::string talkgroup_alpha_tag;

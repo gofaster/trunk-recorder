@@ -168,12 +168,12 @@ namespace gr {
           }
           if (dst_id != -1) {
             BOOST_LOG_TRIVIAL(info) << "DMR Frame Assembler - sending dst: " << dst_id;
-            add_item_tag(0, nitems_written(0), pmt::intern("dst_id"), pmt::from_long(dst_id), pmt::intern(name()));
+            add_item_tag(0, nitems_written(0), pmt::intern("grp_id"), pmt::from_long(dst_id), pmt::intern(name()));
           }
-        //   if (cc != -1) {
-        //     BOOST_LOG_TRIVIAL(info) << "DMR Frame Assembler - sending cc: " << cc;
-        //     add_item_tag(0, nitems_written(0), pmt::intern("cc"), pmt::from_long(cc), pmt::intern(name()));
-        //   }
+          if (cc != -1) {
+            BOOST_LOG_TRIVIAL(info) << "DMR Frame Assembler - sending cc: " << cc;
+            add_item_tag(0, nitems_written(0), pmt::intern("cc"), pmt::from_long(cc), pmt::intern(name()));
+          }
           /*
         if (terminated) {
             add_item_tag(0, nitems_written(0), pmt::intern("terminate"), pmt::from_long(1), pmt::intern(name()));
