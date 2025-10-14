@@ -343,7 +343,7 @@ Call_Data_t Call_Concluder::create_call_data(Call *call, System *sys, Config con
   call_info.talkgroup_display = call->get_talkgroup_display();
   call_info.patched_talkgroups = sys->get_talkgroup_patch(call_info.talkgroup);
   call_info.min_transmissions_removed = 0;
-  call_info.color_code = -1;
+  call_info.color_code = 0;
 
   if (call->get_is_analog()) {
     call_info.audio_type = "analog";

@@ -383,7 +383,7 @@ int transmission_sink::work(int noutput_items, gr_vector_const_void_star &input_
 
       if ((state == RECORDING) || (state == IDLE)) {
         if (cc != d_current_color_code) {
-          if (d_current_call->get_system_type() == "dmr") {
+          if (d_current_call->get_system_type() == "conventionalDMR") {
             d_current_color_code = cc;
             BOOST_LOG_TRIVIAL(info) << loghdr << "DMR Color Code set to: " << d_current_color_code << " Recorder state: " << format_state(state);
           } 
