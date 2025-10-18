@@ -119,7 +119,7 @@ bool transmission_sink::start_recording(Call *call) {
   d_current_call_freq = call->get_freq();
   d_conventional = call->is_conventional();
   if (d_conventional && ( (call->get_system_type() == "conventionalP25") || (call->get_system_type() == "conventionalDMR") )) {
-    BOOST_LOG_TRIVIAL(error) << "transmission_sink::start_recording - Conventional flag is set for a digital system type - dynamically assigning talkgroups";
+    BOOST_LOG_TRIVIAL(debug) << "transmission_sink::start_recording - Conventional flag is set for a digital system type - dynamically assigning talkgroups";
     d_current_call_talkgroup = 0;
     d_current_call_talkgroup_display = "N/A";
     d_current_call_talkgroup_encoded = 0;
@@ -252,6 +252,7 @@ void transmission_sink::end_transmission() {
     strcpy(transmission.filename, current_filename); // Copy the filename
     transmission.talkgroup = d_current_call_talkgroup;
 
+    BOOST_LOG_TRIVIAL(info) << "Adding transmission: " << transmission.filename << " Slot: " << transmission.slot << " Talkgroup: " << transmission.talkgroup << " Length: " << transmission.length << " Samples: " << d_sample_count;
     this->add_transmission(transmission);
 
     // Reset the recorder to be ready to record the next Transmission
