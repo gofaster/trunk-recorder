@@ -777,6 +777,15 @@ dmr_slot::decode_embedded_lc() {
 	d_lc_valid = false;
 	d_lc.clear();
 
+	// Check that we have all 4 fragments (128 bits total)
+	if (d_emb.size() < 128) {
+		if (d_debug >= 10) {
+			fprintf(stderr, "%s Slot(%d), Incomplete EMB LC: only %zu bits, need 128\n", 
+				logts.get(d_msgq_id), d_chan, d_emb.size());
+		}
+		return false;
+	}
+
 	// The data is unpacked downwards in columns
 	bool data[128];
 	memset(data, 0, 128 * sizeof(bool));
