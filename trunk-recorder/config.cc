@@ -74,6 +74,7 @@ void setup_file_log(std::string log_dir, std::string log_color, std::string time
   if (syslog_friendly) {
     global_log_sink = logging::add_file_log(
         keywords::file_name = log_dir + "/trunk-recorder.log",
+        keywords::open_mode = std::ios_base::app,
         keywords::auto_flush = true);
   } else {
     global_log_sink = logging::add_file_log(
